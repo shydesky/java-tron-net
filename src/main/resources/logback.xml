@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<configuration>
+
+    <!-- Be sure to flush latest logs on exit -->
+    <shutdownHook class="ch.qos.logback.core.hook.DelayingShutdownHook"/>
+
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <layout class="ch.qos.logback.classic.PatternLayout">
+            <Pattern>
+                %d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n
+            </Pattern>
+        </layout>
+    </appender>
+
+    <appender name="FILE"
+              class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>./logs/tron-net.log</file>
+        <rollingPolicy
+                class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <!-- rollover daily -->
+            <fileNamePattern>./logs/tron-%d{yyyy-MM-dd}.%i.log.tar.gz</fileNamePattern>
+            <!-- each file should be at most 500MB, keep 30 days worth of history, but at most 50GB -->
+            <maxFileSize>500MB</maxFileSize>
+            <maxHistory>720</maxHistory>
+            <totalSizeCap>50GB</totalSizeCap>
+        </rollingPolicy>
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} %-5level [%t] [%c{1}]\(%F:%L\) %m%n</pattern>
+        </encoder>
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>DEBUG</level>
+        </filter>
+    </appender>
+
+    <root level="INFO">
+        <appender-ref ref="STDOUT" />
+        <appender-ref ref="FILE" />
+    </root>
+
+    <logger name="Config" level="INFO"/>
+    <logger name="ByteArray" level="INFO"/>
+    <logger name="Args" level="INFO"/>
+    <logger name="Net" level="INFO"/>
+    <logger name="NodeHandler" level="INFO"/>
+    <logger name="DiscoverServer" level="INFO"/>
+    <logger name="MessageHandler" level="INFO"/>
+
+</configuration>
+
