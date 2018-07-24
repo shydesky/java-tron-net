@@ -20,6 +20,7 @@ group 'com.tron'
 version '1.0-SNAPSHOT'
 
 sourceCompatibility = 1.8
+[compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
 
 repositories {
     mavenCentral()
@@ -34,16 +35,15 @@ dependencies {
 apply plugin: 'java'
 apply plugin: 'com.google.protobuf'
 apply plugin: 'application'
-apply plugin: 'checkstyle'
+//apply plugin: 'checkstyle'
 apply plugin: 'com.github.johnrengelman.shadow'
 apply plugin: "jacoco"
 apply plugin: 'maven-publish'
 
-mainClassName = 'org.tron.net.common.core.NodeDetection'
-
 def versions = [
         checkstyle: '8.7',
 ]
+
 
 jacoco {
     toolVersion = "0.8.1"
@@ -149,33 +149,27 @@ dependencies {
     // end http
 }
 
-check.dependsOn 'lint'
+/*check.dependsOn 'lint'
 
 checkstyle {
     toolVersion = "${versions.checkstyle}"
     config = resources.text.fromArchiveEntry(configurations.checkstyleConfig, 'google_checks.xml')
 
-}
+}*/
 
-checkstyleMain {
+/*checkstyleMain {
     source = 'src/main/java'
-}
+}*/
 
-task lint(type: Checkstyle) {
-    // Cleaning the old log because of the creation of the new ones (not sure if totaly needed)
-    delete fileTree(dir: "${project.rootDir}/app/build/reports")
-    source 'src'
-    include '**/*.java'
-    exclude 'main/gen/**'
-    exclude 'test/**'
-    // empty classpath
-    classpath = files()
-    //Failing the build
-    ignoreFailures = false
-}
 
 tasks.matching { it instanceof Test }.all {
     testLogging.events = ["failed", "passed", "skipped"]
+}
+
+shadowJar {
+    baseName = 'java-tron'
+    classifier = null
+    version = null
 }
 
 sourceSets {
@@ -215,6 +209,28 @@ protobuf {
         }
     }
 }
-/*if (project.hasProperty("mainClass")) {
-    mainClassName = mainClass
-}*/
+
+
+def binaryRelease(taskName, jarName, mainClass) {
+    return tasks.create("${taskName}", Jar) {
+        baseName = jarName
+        version = null
+        from(sourceSets.main.output) {
+            include "/**"
+        }
+
+        from {
+            configurations.compile.collect {
+                it.isDirectory() ? it : zipTree(it)
+            }
+        }
+
+        manifest {
+            attributes "Main-Class": "${mainClass}"
+        }
+    }
+}
+
+artifacts {
+    archives(binaryRelease('buildJar', 'NetAssitUtil', 'org.tron.net.services.detection.services.NetAssitUtil'))
+}
