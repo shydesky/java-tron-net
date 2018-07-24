@@ -183,7 +183,7 @@ public class NodeDetection implements EventHandler {
                 }
             });
             long end = System.currentTimeMillis() / 1000;
-            if(end - start > 30){
+            if(end - start > 300){
                 break;
             }
         }

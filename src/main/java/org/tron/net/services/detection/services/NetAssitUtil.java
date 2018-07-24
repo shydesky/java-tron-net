@@ -49,7 +49,7 @@ public class NetAssitUtil {
             } catch (Throwable t) {
                 logger.error("Exception in log worker", t);
             }
-        }, 10, 50, TimeUnit.SECONDS);
+        }, 10, 300, TimeUnit.SECONDS);
 
 
         NetUtilHttpService httpApiService = context.getBean(NetUtilHttpService.class);
