@@ -40,6 +40,8 @@ apply plugin: 'com.github.johnrengelman.shadow'
 apply plugin: "jacoco"
 apply plugin: 'maven-publish'
 
+mainClassName = 'org.tron.net.services.detection.services.NetAssitUtil'
+
 def versions = [
         checkstyle: '8.7',
 ]
@@ -208,6 +210,9 @@ protobuf {
             }
         }
     }
+}
+if (project.hasProperty("mainClass")) {
+    mainClassName = mainClass
 }
 
 
