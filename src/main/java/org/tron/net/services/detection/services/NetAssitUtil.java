@@ -8,6 +8,7 @@ import org.tron.net.services.detection.httpservice.NetUtilHttpService;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 
@@ -16,9 +17,15 @@ public class NetAssitUtil {
 
     public ScheduledExecutorService detectExecutor = Executors.newSingleThreadScheduledExecutor();
 
+    public ScheduledExecutorService statisticsExecutor = Executors.newSingleThreadScheduledExecutor();
+
     public void detectAllNode(NodeDetection detect){
         detect.beforeDetect();
         detect.doDetect();
+    }
+
+    public void statisticsAllNode(NodeDetection detect){
+        detect.statisticsAllNode();
     }
 
     public static void main(String args[]){
@@ -27,6 +34,9 @@ public class NetAssitUtil {
         AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(beanFactory);
         context.register(DefaultConfig.class);
         context.refresh();
+
+        NetUtilHttpService httpApiService = context.getBean(NetUtilHttpService.class);
+        httpApiService.start();
 
         NodeDetection detect[] = new NodeDetection[1];
         while(true){
@@ -42,18 +52,28 @@ public class NetAssitUtil {
             }
         }
 
+        boolean[] flag = {false};
         NetAssitUtil util = new NetAssitUtil();
         util.detectExecutor.scheduleWithFixedDelay(() -> {
+            logger.info("当前时间：" + String.valueOf(System.currentTimeMillis() / 1000));
             try {
                 util.detectAllNode(detect[0]);
+                flag[0] = true;
             } catch (Throwable t) {
                 logger.error("Exception in log worker", t);
             }
-        }, 10, 300, TimeUnit.SECONDS);
+        }, 10, 20, TimeUnit.SECONDS);
 
 
-        NetUtilHttpService httpApiService = context.getBean(NetUtilHttpService.class);
-        httpApiService.start();
+        while(true){
+            try {
+                Thread.sleep(10000);
+            }catch(InterruptedException e){
+
+            }
+            logger.info("getAllNode:" + String.valueOf(detect[0].getAllNode().size()));
+        }
+
 
     }
 }

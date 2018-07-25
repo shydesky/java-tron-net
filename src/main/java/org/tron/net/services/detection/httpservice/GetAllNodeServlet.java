@@ -12,6 +12,8 @@ import java.util.Map;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
+import com.alibaba.fastjson.JSONObject;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.tron.net.services.detection.services.NodeDetection;
@@ -25,13 +27,15 @@ public class GetAllNodeServlet extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response) {
         try {
             HashMap<String, NodeHandler> currentNetNode = NodeDetection.currentNetNode;
-            String str = "";
+            HashMap<String, String> outcome = new HashMap<>();
             for (Map.Entry<String, NodeHandler> entry : currentNetNode.entrySet())
             {
-                str += "<h1>" + entry.getKey() + "</h1>";
+                outcome.put(entry.getKey(), entry.getKey());
             }
-            response.setContentType("text/html");
-            response.getWriter().println(str);
+            JSONObject json = new JSONObject();
+            json.putAll(outcome);
+            response.setContentType("application/json; charset=utf-8");
+            response.getWriter().println(json.toJSONString());
         } catch (Exception e) {
             logger.error("Exception: {}", e.getMessage());
         }

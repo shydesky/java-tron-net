@@ -8,16 +8,16 @@ package org.tron.net.common.utils;
  **/
 
 public class NetUtil {
-    
-    /** 
-    * @Description: calculate the distance between two the owner Node and the target Node. 
-    * @Param: 
-      * @param ownerId  the NodeId of owner
-      * @param targetId the NodeId of target
-    * @return: int 
-    * @Author: shydesky@gmail.com
-    * @Date: 2018/7/18 
-    */ 
+
+    /**
+     * @param ownerId  the NodeId of owner
+     * @param targetId the NodeId of target
+     * @Description: calculate the distance between two the owner Node and the target Node.
+     * @Param:
+     * @return: int
+     * @Author: shydesky@gmail.com
+     * @Date: 2018/7/18
+     */
     public static int distance(byte[] ownerId, byte[] targetId) {
         byte[] h1 = targetId;
         byte[] h2 = ownerId;
@@ -48,33 +48,32 @@ public class NetUtil {
         return d;
     }
 
-    /** 
-    * @Description: generate a nodeid with given nodeid
-    * @Param:
-     * @param hexString
-     * @param distance
-    * @return: java.lang.String 
-    * @Author: shydesky@gmail.com
-    * @Date: 2018/7/18 
-    */ 
-    public static String mockNodeIdWithDistance(String nodeIdString, int distance){
-        int len = nodeIdString.length() / 2;
-        int m = (distance-1) / 8;
-        int n = (distance-1) % 8;
-        if(distance == 0){
-            return nodeIdString;
+    /**
+     * @param nodeId
+     * @param distance
+     * @Description: generate a nodeid with given nodeid
+     * @Param:
+     * @return: java.lang.String
+     * @Author: shydesky@gmail.com
+     * @Date: 2018/7/18
+     */
+    public static byte[] mockTargetIdWithDistance(byte[] nodeId, int distance) {
+        byte[] targetId = new byte[nodeId.length];
+
+        for(int i=0; i<nodeId.length; i++){
+            targetId[i] = nodeId[i];
         }
 
-        String oldHexString = nodeIdString.substring(len - 2 * m - 2, len - 2 * m);
-
-        int oldHexInt = Integer.valueOf(oldHexString, 16);
-        oldHexInt ^= (1<<(n));
-        String newHexString;
-        if(oldHexInt <= 0xf){
-            newHexString = "0" + Integer.toHexString(oldHexInt);
-        }else{
-            newHexString = Integer.toHexString(oldHexInt);
+        int m = (distance - 1) / 8;
+        int n = (distance - 1) % 8;
+        int start = nodeId.length / 2 - 1;
+        start = start - m;
+        byte b = targetId[start];
+        b ^= 1 << (n);
+        targetId[start] = b;
+        if (distance(nodeId, targetId) == distance) {
+            return targetId;
         }
-        return nodeIdString.substring(0,len - 2 * m - 2) + newHexString + nodeIdString.substring(len - 2 * m,nodeIdString.length());
+        return targetId;
     }
 }

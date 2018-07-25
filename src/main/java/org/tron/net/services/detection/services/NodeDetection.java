@@ -16,6 +16,7 @@ import org.tron.net.common.config.Args;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
@@ -125,13 +126,6 @@ public class NodeDetection implements EventHandler {
         }
     }
 
-
-    public void sendPingMessage(NodeHandler nodeHandler){
-        PingMessage pingMsg = new PingMessage(getHomeNode(), nodeHandler.getNode());
-        UdpEvent udpEvent = new UdpEvent(pingMsg, nodeHandler.getInetSocketAddress());
-        sendOutbound(udpEvent);
-    }
-
     public void sendFindNeighbourMessage(NodeHandler nodeHandler, byte[] targetId){
         FindNodeMessage msg = new FindNodeMessage(getHomeNode(), targetId);
         UdpEvent udpEvent = new UdpEvent(msg, nodeHandler.getInetSocketAddress());
@@ -139,24 +133,27 @@ public class NodeDetection implements EventHandler {
     }
 
     private void getTrueNodeId(){
-        byte[] targetId = "wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww".getBytes();
+        byte[] targetId = new byte[64];
         for (Node node : bootNodes) {
             sendFindNeighbourMessage(getNodeHandler(node), targetId);
         }
     }
 
     private void clear(){
-/*        logger.info("clear currentNetNode:" + currentNetNode.size());
-        currentNetNode.clear();*/
-        logger.info("clear allNode:" + allNode.size());
         allNode.clear();
-        logger.info("clear tempNetNode:" + NodeDetection.tempNetNode.size());
+        logger.info("clear allNode:" + allNode.size());
         NodeDetection.tempNetNode = new HashMap<>();
+        logger.info("clear tempNetNode:" + NodeDetection.tempNetNode.size());
+        currentNetNode.clear();
         logger.info("currentNetNode:" + NodeDetection.currentNetNode.size());
+        allDetectedNode.clear();
+        logger.info("allDetectedNode:" + allDetectedNode.size());
+        nodeHandlerMap.clear();
+        logger.info("nodeHandlerMap:" + nodeHandlerMap.size());
     }
 
     public void beforeDetect(){
-        logger.info("Detect true nodeId of the nodes!");
+        logger.info("before detect start!");
         clear();
         getTrueNodeId();
         try{
@@ -168,26 +165,42 @@ public class NodeDetection implements EventHandler {
         nodeHandlerMap.entrySet().stream().filter(
                 e-> !e.getValue().getNode().getIsFakeNodeId()
         ).forEach(e->allNode.put(e.getValue().getNode().getHexId(), e.getValue().getNode()));
+        if(allNode.size() == 0){
+            logger.error("before detect failure!");
+        }
     }
 
     public void doDetect(){
-        logger.info("Detect neighbours of the nodes!");
+        logger.info("启动！启动节点的数量：" + allNode.size());
         long start = System.currentTimeMillis() / 1000;
         while(allNode.size() > 0){
             allNode.values().forEach(node->{
                 if(!allDetectedNode.containsKey(node.getHexId())){
-                    if(getNodeHandler(node)!=null){
-                        detectNeighbour(getNodeHandler(node));
-                        allDetectedNode.put(node.getHexId(), node);
-                    }
+                    detectNeighbour(getNodeHandler(node));
+                    allDetectedNode.put(node.getHexId(), node);
                 }
             });
             long end = System.currentTimeMillis() / 1000;
-            if(end - start > 300){
+            if(end - start > 30){
                 break;
             }
         }
 
+        allNode.entrySet().forEach(e->{
+            String key = e.getValue().getHost() + ":" +  e.getValue().getPort();
+            NodeDetection.tempNetNode.put(key, getNodeHandler(e.getValue()));
+        });
+        NodeDetection.currentNetNode = NodeDetection.tempNetNode;
+    }
+
+    public void statisticsAllNode(){
+        Iterator<String> iter = nodeHandlerMap.keySet().iterator();
+        String keyp;
+        while(iter.hasNext()){
+            keyp = iter.next();
+            logger.info("neighbours:" + nodeHandlerMap.get(keyp).getAllNeighbourCount());
+        }
+        logger.info("Detect neighbours of the nodes ends!");
         allNode.entrySet().forEach(e->{
             String key = e.getValue().getHost() + ":" +  e.getValue().getPort();
             NodeDetection.tempNetNode.put(key, getNodeHandler(e.getValue()));
@@ -207,7 +220,7 @@ public class NodeDetection implements EventHandler {
         ArrayList<FindNodeMessage> nodeMessages = new ArrayList<>();
         byte[] targetId;
         for (int i = 1; i <= 256; i++) {
-            targetId = NetUtil.mockNodeIdWithDistance(node.getHexId(), i).getBytes();
+            targetId = NetUtil.mockTargetIdWithDistance(node.getId(), i);
             nodeMessages.add(new FindNodeMessage(getHomeNode(), targetId));
         }
         nodeHandler.setFindNeighbourMsgCount(256);

@@ -2,6 +2,7 @@ package org.tron.net.services.detection.services;
 
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.tron.net.common.net.udp.handler.UdpEvent;
 import org.tron.net.common.net.udp.message.Message;
 import org.tron.net.common.net.udp.message.discover.FindNodeMessage;
@@ -20,6 +21,7 @@ import java.net.InetSocketAddress;
  * @create: 2018-07-18
  **/
 
+@Slf4j
 public class NodeHandler {
 
     private boolean waitForNeighbors = false;
@@ -36,7 +38,7 @@ public class NodeHandler {
         this.node = node;
         this.nodeDetection = nodeDetection;
         buckets = new NodeBucket[257];
-        for (int i = 1; i <= 256; i++) {
+        for (int i = 0; i <= 256; i++) {
             buckets[i] = new NodeBucket(i);
         }
     }
@@ -74,15 +76,13 @@ public class NodeHandler {
 
 
     public void handleNeighbours(NeighborsMessage msg) {
-        if(this.nodeDetection.getAllDetectedNode().containsKey(node.getHexId())){
-            for (Node n : msg.getNodes()) {
-                if (!nodeDetection.getHomeNode().getHexId().equals(n.getHexId())) {
-                    buckets[NetUtil.distance(node.getId(), n.getId())].addNode(n);
-                    nodeDetection.getAllNode().put(n.getHexId(), n);
-                }
+        for (Node n : msg.getNodes()) {
+            if (!nodeDetection.getHomeNode().getHexId().equals(n.getHexId())) {
+                buckets[NetUtil.distance(node.getId(), n.getId())].addNode(n);
+                nodeDetection.getAllNode().put(n.getHexId(), n);
             }
-            setFindNeighbourMsgCount(getFindNeighbourMsgCount() - 1);  //receive a reply
         }
+        setFindNeighbourMsgCount(getFindNeighbourMsgCount() - 1);  //receive a reply
     }
 
 
