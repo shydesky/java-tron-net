@@ -148,8 +148,6 @@ public class NodeDetection implements EventHandler {
         logger.info("clear allNode:" + allNode.size());
         NodeDetection.tempNetNode = new HashMap<>();
         logger.info("clear tempNetNode:" + NodeDetection.tempNetNode.size());
-        currentNetNode.clear();
-        logger.info("currentNetNode:" + NodeDetection.currentNetNode.size());
         allDetectedNode.clear();
         logger.info("allDetectedNode:" + allDetectedNode.size());
         nodeHandlerMap.clear();
