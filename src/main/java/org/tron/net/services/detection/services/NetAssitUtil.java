@@ -59,16 +59,16 @@ public class NetAssitUtil {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-        }, 10, 2000, TimeUnit.SECONDS);
+        }, 10, 300, TimeUnit.SECONDS);
 
 
-        while(true){
+/*        while(true){
             try {
                 Thread.sleep(10000);
                 logger.info("getAllNode:" + String.valueOf(detect[0].getAllNode().size()));
             }catch(InterruptedException e){
 
             }
-        }
+        }*/
     }
 }
