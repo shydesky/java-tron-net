@@ -17,12 +17,13 @@ public class NetAssitUtil {
     public ScheduledExecutorService detectExecutor = Executors.newSingleThreadScheduledExecutor();
 
     public void detectAllNode(NodeDetection detect){
+        int number = 0;
         if(detect.beforeDetect()){
-            detect.doDetect();
+            number = detect.doDetect();
         }else{
            logger.error("detect boot failure!");
         }
-
+        logger.info("one round ends and all node detected number is: " + number);
     }
 
     public static void main(String args[]){

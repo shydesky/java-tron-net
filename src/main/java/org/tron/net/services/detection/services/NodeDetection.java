@@ -182,7 +182,7 @@ public class NodeDetection implements EventHandler {
         return false;
     }
 
-    public void doDetect(){
+    public int doDetect(){
         logger.info("启动！启动节点的数量：" + allNode.size());
         long start = System.currentTimeMillis() / 1000;
         while(allNode.size() > 0){
@@ -223,6 +223,7 @@ public class NodeDetection implements EventHandler {
         });
         // one round ends, assign the tempNetNode to the currentNetNode.
         NodeDetection.currentNetNode = NodeDetection.tempNetNode;
+        return NodeDetection.currentNetNode.size();
     }
 
     public void statisticsAllNode(){
