@@ -8,7 +8,6 @@ import org.tron.net.services.detection.httpservice.NetUtilHttpService;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 
@@ -17,15 +16,13 @@ public class NetAssitUtil {
 
     public ScheduledExecutorService detectExecutor = Executors.newSingleThreadScheduledExecutor();
 
-    public ScheduledExecutorService statisticsExecutor = Executors.newSingleThreadScheduledExecutor();
-
     public void detectAllNode(NodeDetection detect){
-        detect.beforeDetect();
-        detect.doDetect();
-    }
+        if(detect.beforeDetect()){
+            detect.doDetect();
+        }else{
+           logger.error("detect boot failure!");
+        }
 
-    public void statisticsAllNode(NodeDetection detect){
-        detect.statisticsAllNode();
     }
 
     public static void main(String args[]){
@@ -59,21 +56,19 @@ public class NetAssitUtil {
             try {
                 util.detectAllNode(detect[0]);
                 flag[0] = true;
-            } catch (Throwable t) {
-                logger.error("Exception in log worker", t);
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-        }, 10, 20, TimeUnit.SECONDS);
+        }, 10, 2000, TimeUnit.SECONDS);
 
 
         while(true){
             try {
                 Thread.sleep(10000);
+                logger.info("getAllNode:" + String.valueOf(detect[0].getAllNode().size()));
             }catch(InterruptedException e){
 
             }
-            logger.info("getAllNode:" + String.valueOf(detect[0].getAllNode().size()));
         }
-
-
     }
 }

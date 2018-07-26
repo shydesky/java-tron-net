@@ -7,7 +7,6 @@ import org.tron.net.common.net.udp.handler.UdpEvent;
 import org.tron.net.common.net.udp.message.Message;
 import org.tron.net.common.net.udp.message.discover.FindNodeMessage;
 import org.tron.net.common.net.udp.message.discover.NeighborsMessage;
-import org.tron.net.common.net.udp.message.discover.PingMessage;
 import org.tron.net.common.net.udp.message.discover.PongMessage;
 import org.tron.net.services.detection.pojo.Node;
 import org.tron.net.common.utils.NetUtil;
@@ -33,12 +32,12 @@ public class NodeDetection implements EventHandler {
     private ConcurrentHashMap<String, Node> allNode = new ConcurrentHashMap<>();
     private ConcurrentHashMap<String, Node> allDetectedNode = new ConcurrentHashMap<>();
     private Map<String, NodeHandler> nodeHandlerMap = new ConcurrentHashMap<>();
-    private int allMsgSendCount = 0;
-    private int allMsgRecvCount = 0;
     private boolean forTrueNodeId = true;
 
-    public static HashMap<String, NodeHandler> tempNetNode = new HashMap<>();
-    public static HashMap<String, NodeHandler> currentNetNode = new HashMap<>();
+    public HashMap<String, Integer> msgReceived = new HashMap();
+    public HashMap<String, Integer> msgSended = new HashMap();
+    public static HashMap<String, NodeHandler> tempNetNode = new HashMap<>();  // record the detect outcome current round
+    public static HashMap<String, NodeHandler> currentNetNode = new HashMap<>();  // record the detect outcome last round
 
     public NodeDetection(){
         homeNode = new Node("c5ee1254039daa38e133642675c4c7713096cb22654be4d893d30cd14a22324c56a13cabc645599092c2fb7e234850ff910b46dcd2ce630a36e4e0e5c2939440".getBytes(), "127.0.0.1",
@@ -120,6 +119,11 @@ public class NodeDetection implements EventHandler {
                 if(forTrueNodeId){
                     nodeHandler.handleNeighboursForTrueNodeId((NeighborsMessage) m);
                 }else{
+                    if(msgReceived.containsKey(nodeHandler.getNode().getHexId())) {
+                        msgReceived.put(nodeHandler.getNode().getHexId(),msgReceived.get(nodeHandler.getNode().getHexId()) + 1);
+                    }else{
+                        msgReceived.put(nodeHandler.getNode().getHexId(), 1);
+                    }
                     nodeHandler.handleNeighbours((NeighborsMessage) m);
                 }
                 break;
@@ -152,22 +156,30 @@ public class NodeDetection implements EventHandler {
         logger.info("nodeHandlerMap:" + nodeHandlerMap.size());
     }
 
-    public void beforeDetect(){
+    public boolean beforeDetect(){
         logger.info("before detect start!");
         clear();
         getTrueNodeId();
-        try{
-            Thread.sleep(10000);
-        }catch (InterruptedException e){
-            e.printStackTrace();
+        int count = 0;
+        while(count < 5){
+            try{
+                Thread.sleep(10000);
+            }catch (InterruptedException e){
+                e.printStackTrace();
+            }
+            nodeHandlerMap.entrySet().stream().filter(
+                    e-> !e.getValue().getNode().getIsFakeNodeId()
+            ).forEach(e->allNode.put(e.getValue().getNode().getHexId(), e.getValue().getNode()));
+            if(allNode.size() == 0){
+                count ++;
+            }else{
+                forTrueNodeId = false;  // not handle the NeighboursForTrueNodeId msg any more
+                logger.info("before detect success!");
+                return true;
+            }
         }
-        forTrueNodeId = false;
-        nodeHandlerMap.entrySet().stream().filter(
-                e-> !e.getValue().getNode().getIsFakeNodeId()
-        ).forEach(e->allNode.put(e.getValue().getNode().getHexId(), e.getValue().getNode()));
-        if(allNode.size() == 0){
-            logger.error("before detect failure!");
-        }
+        logger.error("before detect failure after retry " + count + " times!");
+        return false;
     }
 
     public void doDetect(){
@@ -179,17 +191,37 @@ public class NodeDetection implements EventHandler {
                     detectNeighbour(getNodeHandler(node));
                     allDetectedNode.put(node.getHexId(), node);
                 }
+                //logger.info("allDetectedNode:" + allDetectedNode.size());
             });
             long end = System.currentTimeMillis() / 1000;
-            if(end - start > 30){
+            //TODO: optimise the force quit time algorithm
+            if(end - start > 100){
                 break;
             }
         }
 
+        /*msgReceived.clear();
+        logger.info(String.valueOf(msgReceived.size()));
+        allNode.values().forEach(node-> {
+            try {
+                Thread.sleep(10);
+            }catch (Exception e){
+
+            }
+            NodeHandler handler = nodeHandlerMap.get(node.getHexId());
+            handler.sendFindNode(new byte[64]);
+        });
+        try {
+            Thread.sleep(20000);
+        }catch (Exception e){
+
+        }*/
+        // generate detect outcome this round
         allNode.entrySet().forEach(e->{
             String key = e.getValue().getHost() + ":" +  e.getValue().getPort();
             NodeDetection.tempNetNode.put(key, getNodeHandler(e.getValue()));
         });
+        // one round ends, assign the tempNetNode to the currentNetNode.
         NodeDetection.currentNetNode = NodeDetection.tempNetNode;
     }
 
@@ -208,28 +240,27 @@ public class NodeDetection implements EventHandler {
         NodeDetection.currentNetNode = NodeDetection.tempNetNode;
     }
 
-    /**
-    * @Description: detect one node's neighbours by send FindNodeMessage to the node
-    * @Param: * @param nodeHandler
-    * @return: void
-    * @Author: shydesky@gmail.com
-    * @Date: 2018/7/19
-    */
     private void detectNeighbour(NodeHandler nodeHandler){
+        int distanceBegin = 240;
+        int distanceEnd = 256;
+
         Node node = nodeHandler.getNode();
-        ArrayList<FindNodeMessage> nodeMessages = new ArrayList<>();
         byte[] targetId;
-        for (int i = 1; i <= 256; i++) {
+        for (int i = distanceBegin + 1; i <= distanceEnd; i++) {
+            try {
+                Thread.sleep(3);
+            }catch (Exception e){
+
+            }
             targetId = NetUtil.mockTargetIdWithDistance(node.getId(), i);
-            nodeMessages.add(new FindNodeMessage(getHomeNode(), targetId));
+            sendOutbound(new UdpEvent(new FindNodeMessage(getHomeNode(), targetId),nodeHandler.getInetSocketAddress()));
         }
-        nodeHandler.setFindNeighbourMsgCount(256);
-        nodeMessages.forEach(msg ->sendOutbound(new UdpEvent(msg, nodeHandler.getInetSocketAddress())));
+        msgSended.put(node.getHexId(), distanceEnd - distanceBegin);  // record the node and msg we have send the find node msg
+        nodeHandler.setFindNeighbourMsgCount(distanceEnd - distanceBegin);
     }
 
     public void sendOutbound(UdpEvent udpEvent) {
         if (messageSender != null) {
-            allMsgSendCount++;
             messageSender.accept(udpEvent);
         }
     }
