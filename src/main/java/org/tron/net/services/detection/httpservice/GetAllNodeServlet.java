@@ -34,8 +34,6 @@ public class GetAllNodeServlet extends HttpServlet {
             {
                 ipList.add(entry.getKey().split(":")[0]);
             }
-            JSONArray res = new JSONArray();
-            res.add(ipList);
             outcome.put("ip", ipList);
             JSONObject json = new JSONObject();
             json.putAll(outcome);
