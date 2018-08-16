@@ -6,6 +6,7 @@ import org.springframework.context.annotation.AnnotationConfigApplicationContext
 import org.tron.net.common.config.DefaultConfig;
 import org.tron.net.services.detection.httpservice.NetUtilHttpService;
 
+import java.util.Date;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -53,7 +54,7 @@ public class NetAssitUtil {
         boolean[] flag = {false};
         NetAssitUtil util = new NetAssitUtil();
         util.detectExecutor.scheduleWithFixedDelay(() -> {
-            logger.info("当前时间：" + String.valueOf(System.currentTimeMillis() / 1000));
+            logger.info("Current Time：" + new Date(System.currentTimeMillis()).toString());
             try {
                 util.detectAllNode(detect[0]);
                 flag[0] = true;
@@ -61,15 +62,5 @@ public class NetAssitUtil {
                 e.printStackTrace();
             }
         }, 10, 300, TimeUnit.SECONDS);
-
-
-/*        while(true){
-            try {
-                Thread.sleep(10000);
-                logger.info("getAllNode:" + String.valueOf(detect[0].getAllNode().size()));
-            }catch(InterruptedException e){
-
-            }
-        }*/
     }
 }

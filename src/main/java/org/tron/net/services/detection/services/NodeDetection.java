@@ -15,7 +15,6 @@ import org.tron.net.common.config.Args;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
@@ -145,17 +144,12 @@ public class NodeDetection implements EventHandler {
 
     private void clear(){
         allNode.clear();
-        logger.info("clear allNode:" + allNode.size());
         NodeDetection.tempNetNode = new HashMap<>();
-        logger.info("clear tempNetNode:" + NodeDetection.tempNetNode.size());
         allDetectedNode.clear();
-        logger.info("allDetectedNode:" + allDetectedNode.size());
         nodeHandlerMap.clear();
-        logger.info("nodeHandlerMap:" + nodeHandlerMap.size());
     }
 
     public boolean beforeDetect(){
-        logger.info("before detect start!");
         clear();
         getTrueNodeId();
         int count = 0;
@@ -172,16 +166,16 @@ public class NodeDetection implements EventHandler {
                 count ++;
             }else{
                 forTrueNodeId = false;  // not handle the NeighboursForTrueNodeId msg any more
-                logger.info("before detect success!");
+                logger.info("detect true id success!");
                 return true;
             }
         }
-        logger.error("before detect failure after retry " + count + " times!");
+        logger.error("detect true id failure after retry " + count + " times!");
         return false;
     }
 
     public int doDetect(){
-        logger.info("启动！启动节点的数量：" + allNode.size());
+        logger.info("Detection starts with " +  allNode.size() + " nodes！");
         long start = System.currentTimeMillis() / 1000;
         while(allNode.size() > 0){
             allNode.values().forEach(node->{
@@ -189,7 +183,6 @@ public class NodeDetection implements EventHandler {
                     detectNeighbour(getNodeHandler(node));
                     allDetectedNode.put(node.getHexId(), node);
                 }
-                //logger.info("allDetectedNode:" + allDetectedNode.size());
             });
             long end = System.currentTimeMillis() / 1000;
             //TODO: optimise the force quit time algorithm
@@ -198,22 +191,6 @@ public class NodeDetection implements EventHandler {
             }
         }
 
-        /*msgReceived.clear();
-        logger.info(String.valueOf(msgReceived.size()));
-        allNode.values().forEach(node-> {
-            try {
-                Thread.sleep(10);
-            }catch (Exception e){
-
-            }
-            NodeHandler handler = nodeHandlerMap.get(node.getHexId());
-            handler.sendFindNode(new byte[64]);
-        });
-        try {
-            Thread.sleep(20000);
-        }catch (Exception e){
-
-        }*/
         // generate detect outcome this round
         allNode.entrySet().forEach(e->{
             String key = e.getValue().getHost() + ":" +  e.getValue().getPort();
@@ -222,21 +199,6 @@ public class NodeDetection implements EventHandler {
         // one round ends, assign the tempNetNode to the currentNetNode.
         NodeDetection.currentNetNode = NodeDetection.tempNetNode;
         return NodeDetection.currentNetNode.size();
-    }
-
-    public void statisticsAllNode(){
-        Iterator<String> iter = nodeHandlerMap.keySet().iterator();
-        String keyp;
-        while(iter.hasNext()){
-            keyp = iter.next();
-            logger.info("neighbours:" + nodeHandlerMap.get(keyp).getAllNeighbourCount());
-        }
-        logger.info("Detect neighbours of the nodes ends!");
-        allNode.entrySet().forEach(e->{
-            String key = e.getValue().getHost() + ":" +  e.getValue().getPort();
-            NodeDetection.tempNetNode.put(key, getNodeHandler(e.getValue()));
-        });
-        NodeDetection.currentNetNode = NodeDetection.tempNetNode;
     }
 
     private void detectNeighbour(NodeHandler nodeHandler){
