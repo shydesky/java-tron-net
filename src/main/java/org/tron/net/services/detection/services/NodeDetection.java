@@ -41,7 +41,7 @@ public class NodeDetection implements EventHandler {
 
     public NodeDetection(){
         homeNode = new Node("c5ee1254039daa38e133642675c4c7713096cb22654be4d893d30cd14a22324c56a13cabc645599092c2fb7e234850ff910b46dcd2ce630a36e4e0e5c2939440".getBytes(), "127.0.0.1",
-                18888);
+                18880);
         // initial the public node
         setBootNodes(args.getPublicNode().getIpList());
     }
