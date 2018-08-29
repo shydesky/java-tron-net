@@ -25,14 +25,10 @@ public class NodePublic {
         return ipList;
     }
     public void setIpList(){
-        this.ipList.add("52.15.93.92:18888");
-        /*this.ipList.add("52.53.189.99:18888");
-        this.ipList.add("18.196.99.16:18888");
-        this.ipList.add("34.253.187.192:18888");
-        this.ipList.add("18.196.99.16:18888");
-        this.ipList.add("52.56.56.149:18888");
-        this.ipList.add("35.180.51.163:18888");
-        this.ipList.add("54.252.224.209:18888");
-        this.ipList.add("34.220.77.106:18888");*/
+        this.ipList.add("47.254.144.25:18888");
+        this.ipList.add("47.254.146.147:18888");
+        this.ipList.add("47.254.16.55:18888");
+        this.ipList.add("52.14.86.232:18888");
     }
+
 }

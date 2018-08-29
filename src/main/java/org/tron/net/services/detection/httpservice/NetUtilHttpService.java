@@ -18,7 +18,7 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class NetUtilHttpService implements Service {
 
-    private int port = 8888;
+    private int port = 9999;
 
     private Server server;
 

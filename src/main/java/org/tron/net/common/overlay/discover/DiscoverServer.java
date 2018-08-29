@@ -47,7 +47,7 @@ public class DiscoverServer {
 
     private Args args = Args.getInstance();
 
-    private int port = 18884;
+    private int port = 18885;
 
     private Channel channel;
 

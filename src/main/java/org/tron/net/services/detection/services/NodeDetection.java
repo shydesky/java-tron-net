@@ -182,6 +182,9 @@ public class NodeDetection implements EventHandler {
 
     public int doDetect(){
         logger.info("启动！启动节点的数量：" + allNode.size());
+        for(Map.Entry<String, Node> entry:allNode.entrySet()){
+          logger.info("ss" + entry.getValue().getHost());
+        }
         long start = System.currentTimeMillis() / 1000;
         while(allNode.size() > 0){
             allNode.values().forEach(node->{
@@ -189,7 +192,7 @@ public class NodeDetection implements EventHandler {
                     detectNeighbour(getNodeHandler(node));
                     allDetectedNode.put(node.getHexId(), node);
                 }
-                //logger.info("allDetectedNode:" + allDetectedNode.size());
+                logger.info("allDetectedNode:" + allDetectedNode.size());
             });
             long end = System.currentTimeMillis() / 1000;
             //TODO: optimise the force quit time algorithm
